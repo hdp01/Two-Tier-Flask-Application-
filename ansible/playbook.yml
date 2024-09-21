@@ -2,12 +2,16 @@
 - hosts: web
   become: yes
   tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
     - name: Install Docker
       apt:
         name: docker.io
         state: present
 
-    - name: Start Docker
+    - name: Start Docker service
       service:
         name: docker
         state: started

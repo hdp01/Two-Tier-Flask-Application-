@@ -1,2 +1,2 @@
 ---
-- import_tasks: ../../playbook.yml
+- import_playbook: playbook.yml
