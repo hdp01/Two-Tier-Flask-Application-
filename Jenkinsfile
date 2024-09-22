@@ -30,10 +30,11 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 script {
-                    // Use the local SSH key directly
-                    sh """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ansible/inventory ansible/playbook.yml"
-                    """
+                    sshagent([GIT_CREDENTIALS_ID]) {
+                        bat """
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ansible/inventory ansible/playbook.yml -vvv"
+                        """
+                    }
                 }
             }
         }
