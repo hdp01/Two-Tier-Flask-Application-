@@ -4,8 +4,9 @@ pipeline {
     environment {
         DOCKER_CREDENTIALS_ID = 'docker-credential' // Your Docker Hub credentials ID
         GIT_CREDENTIALS_ID = 'github-credentials'    // Your GitHub credentials ID
-        SSH_CREDENTIALS_ID = 'ec2-ssh-key'           // Your EC2 SSH credentials ID
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'  // Your Docker image name
+        EC2_PUBLIC_IP = '43.204.142.65'              // Your EC2 instance public IP
+        SSH_KEY_PATH = 'C:/Users/LENOVO/Downloads/target-server-key.pem' // Path to your SSH key
     }
 
     stages {
@@ -28,8 +29,11 @@ pipeline {
 
         stage('Deploy with Ansible') {
             steps {
-                sshagent([SSH_CREDENTIALS_ID]) { // Use the SSH credentials for EC2
-                    sh 'ansible-playbook -i ansible/inventory ansible/playbook.yml' // Run the Ansible playbook
+                script {
+                    // Use the local SSH key directly
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ansible/inventory ansible/playbook.yml"
+                    """
                 }
             }
         }

@@ -1,2 +1,2 @@
 [web]
-ec2-instance ansible_host=43.204.142.65 ansible_user=ubuntu
+43.204.142.65 ansible_ssh_private_key_file=C:/Users/LENOVO/Downloads/target-server-key.pem
