@@ -6,7 +6,7 @@ pipeline {
         GIT_CREDENTIALS_ID = 'github-credentials'    // GitHub credentials ID
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'  // Docker image name
         EC2_PUBLIC_IP = '43.204.142.65'              // EC2 instance public IP
-        SSH_KEY_PATH = 'C:/Users/LENOVO/Downloads/target-server-key.pem' // Path to SSH key
+        SSH_KEY_PATH = 'C:\\Users\\LENOVO\\Downloads\\target-server-key.pem' // Path to SSH key
     }
 
     stages {
@@ -38,11 +38,14 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 script {
+                    // List files for debugging
+                    bat 'dir C:\\Users\\LENOVO\\Downloads\\'
+
                     // Copy ansible directory to EC2
                     bat """
                         scp -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" -r ansible ubuntu@${EC2_PUBLIC_IP}:~
                     """
-                    // Copy the SSH key to EC2 (optional, if you need to run commands with it)
+                    // Copy the SSH key to EC2 (optional)
                     bat """
                         scp -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP}:~/.ssh/target-server-key.pem
                     """
@@ -52,12 +55,11 @@ pipeline {
                     """
                     // Run ansible playbook
                     bat """
-                        ssh -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP} "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
+                        ssh -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP} "ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_SSH_PRIVATE_KEY_FILE=${SSH_KEY_PATH} ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
                     """
                 }
             }
         }
-
     }
 
     post {
