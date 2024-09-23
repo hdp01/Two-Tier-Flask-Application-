@@ -40,23 +40,24 @@ pipeline {
                 script {
                     // Copy ansible directory to EC2
                     bat """
-                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} -r ansible ubuntu@${EC2_PUBLIC_IP}:~
+                        scp -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" -r ansible ubuntu@${EC2_PUBLIC_IP}:~
                     """
-                    // Copy SSH key to the EC2 instance
+                    // Copy the SSH key to EC2 (optional, if you need to run commands with it)
                     bat """
-                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP}:~/.ssh/target-server-key.pem
+                        scp -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP}:~/.ssh/target-server-key.pem
                     """
-                    // Set the correct permissions for the key on the EC2 instance
+                    // Set permissions for the SSH key on EC2
                     bat """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "chmod 600 ~/.ssh/target-server-key.pem"
+                        ssh -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP} "chmod 600 ~/.ssh/target-server-key.pem"
                     """
                     // Run ansible playbook
                     bat """
-                        ssh -o StrictHostKeyChecking=no -i ~/.ssh/target-server-key.pem ubuntu@${EC2_PUBLIC_IP} "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
+                        ssh -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP} "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
                     """
                 }
             }
         }
+
     }
 
     post {
