@@ -38,9 +38,14 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 script {
-                    // Using the local SSH key file directly in the bat command (for Windows)
+                    // Copy the Ansible directory to the EC2 instance
                     bat """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ansible/inventory ansible/playbook.yml -vvv"
+                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} -r ansible ubuntu@${EC2_PUBLIC_IP}:~
+                    """
+
+                    // Run the Ansible playbook from the copied directory
+                    bat """
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
                     """
                 }
             }
