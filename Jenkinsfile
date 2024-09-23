@@ -38,13 +38,14 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 script {
-                    // Copy ansible directory to EC2
+                    // Copy ansible directory to EC2 using forward slashes for paths
                     bat """
-                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} -r ansible ubuntu@${EC2_PUBLIC_IP}:~
+                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH.replaceAll('\\\\', '/')} -r ansible ubuntu@${EC2_PUBLIC_IP}:~
                     """
-                    // Run ansible playbook
+
+                    // Run ansible playbook on EC2
                     bat """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH.replaceAll('\\\\', '/')} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
                     """
                 }
             }
