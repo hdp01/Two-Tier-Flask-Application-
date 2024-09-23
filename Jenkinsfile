@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credential' // Your Docker Hub credentials ID
-        GIT_CREDENTIALS_ID = 'github-credentials'    // Your GitHub credentials ID
-        DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'  // Your Docker image name
-        EC2_PUBLIC_IP = '43.204.142.65'              // Your EC2 instance public IP
-        SSH_KEY_PATH = 'C:/Users/LENOVO/Downloads/target-server-key.pem' // Path to your SSH key
+        DOCKER_CREDENTIALS_ID = 'docker-credential' // Docker Hub credentials ID
+        GIT_CREDENTIALS_ID = 'github-credentials'    // GitHub credentials ID
+        DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'  // Docker image name
+        EC2_PUBLIC_IP = '43.204.142.65'              // EC2 instance public IP
+        SSH_KEY_PATH = 'C:/Users/LENOVO/Downloads/target-server-key.pem' // Path to SSH key
     }
 
     stages {
@@ -23,6 +23,7 @@ pipeline {
                 }
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -37,9 +38,13 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 script {
-                    // Using the local SSH key file directly in the bat command (for Windows)
+                    // Copy ansible directory to EC2
                     bat """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ansible/inventory ansible/playbook.yml -vvv"
+                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} -r ansible ubuntu@${EC2_PUBLIC_IP}:~
+                    """
+                    // Run ansible playbook
+                    bat """
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
                     """
                 }
             }
