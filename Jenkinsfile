@@ -16,6 +16,14 @@ pipeline {
             }
         }
 
+        stage('List Ansible Directory') {
+            steps {
+                script {
+                    bat 'dir ansible' // List the contents of the ansible directory
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
