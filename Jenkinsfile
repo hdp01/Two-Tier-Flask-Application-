@@ -2,34 +2,33 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credential'
-        GIT_CREDENTIALS_ID = 'github-credentials'
-        DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
-        EC2_PUBLIC_IP = '43.204.142.65'
-        SSH_KEY_PATH = 'C:/Users/LENOVO/Downloads/target-server-key.pem'
+        DOCKER_CREDENTIALS_ID = 'docker-credential' // Your Docker Hub credentials ID
+        GIT_CREDENTIALS_ID = 'github-credentials'    // Your GitHub credentials ID
+        DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'  // Your Docker image name
+        EC2_PUBLIC_IP = '43.204.142.65'              // Your EC2 instance public IP
+        SSH_KEY_PATH = 'C:/Users/LENOVO/Downloads/target-server-key.pem' // Path to your SSH key
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout scm // Check out the code from the GitHub repository
             }
         }
 
         stage('List Ansible Directory') {
             steps {
                 script {
-                    bat 'dir ansible'
+                    bat 'dir ansible' // List the contents of the ansible directory
                 }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        def app = docker.build(DOCKER_IMAGE_NAME)
-                        app.push('latest')
+                        def app = docker.build(DOCKER_IMAGE_NAME) // Build the Docker image
+                        app.push('latest') // Push the image to Docker Hub
                     }
                 }
             }
@@ -38,14 +37,9 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 script {
-                    // Copy ansible directory to EC2 using forward slashes for paths
+                    // Using the local SSH key file directly in the bat command (for Windows)
                     bat """
-                        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH.replaceAll('\\\\', '/')} -r ansible ubuntu@${EC2_PUBLIC_IP}:~
-                    """
-
-                    // Run ansible playbook on EC2
-                    bat """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH.replaceAll('\\\\', '/')} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ubuntu@${EC2_PUBLIC_IP} "ansible-playbook -i ansible/inventory ansible/playbook.yml -vvv"
                     """
                 }
             }
@@ -54,10 +48,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment completed successfully!'
+            echo 'Deployment completed successfully!' // Success message
         }
         failure {
-            echo 'Deployment failed. Check the logs for more details.'
+            echo 'Deployment failed. Check the logs for more details.' // Failure message
         }
     }
 }
