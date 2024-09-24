@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credential'
+        DOCKER_CREDENTIALS_ID = 'docker-credential' // This should point to your stored Docker credentials
         GIT_CREDENTIALS_ID = 'github-credentials'
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
-        SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.ppk" // Ensure this is the correct key format
+        SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.ppk"
         EC2_USER = 'ubuntu'
-        EC2_HOST = '43.204.142.65' // Replace with your EC2 public IP address
+        EC2_HOST = '43.204.142.65'
     }
 
     stages {
@@ -20,7 +20,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Use the stored Docker credentials for authentication
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
                         def app = docker.build(DOCKER_IMAGE_NAME)
                         app.push('latest')
@@ -33,7 +32,7 @@ pipeline {
             steps {
                 script {
                     bat """
-                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch " \
+                    plink -i C:/Users/LENOVO/Downloads/target-server-key.ppk ubuntu@${EC2_HOST} -batch " \
                     echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin; \
                     docker pull ${DOCKER_IMAGE_NAME}:latest; \
                     docker stop \$(docker ps -q); \
