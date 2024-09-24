@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credential' // Make sure this matches your Jenkins stored credentials
+        DOCKER_CREDENTIALS_ID = 'docker-credential' // Your Jenkins stored Docker credentials ID
         GIT_CREDENTIALS_ID = 'github-credentials'
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
         SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.ppk"
@@ -31,25 +31,23 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
-                    // Use a temporary login script to avoid interactive login issues
-                    def loginCommand = """
-                        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-                    """
+                    // Use the credentials stored in Jenkins directly
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Create a temporary shell script to handle Docker login and image management
+                        def deployScript = """
+                            #!/bin/bash
+                            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+                            docker pull ${DOCKER_IMAGE_NAME}:latest
+                            docker stop \$(docker ps -q) || true
+                            docker rm \$(docker ps -aq) || true
+                            docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest
+                        """
 
-                    // Create a temporary shell script to handle Docker login and image management
-                    def deployScript = """
-                        #!/bin/bash
-                        ${loginCommand}
-                        docker pull ${DOCKER_IMAGE_NAME}:latest
-                        docker stop \$(docker ps -q) || true
-                        docker rm \$(docker ps -aq) || true
-                        docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest
-                    """
-
-                    // Save the script to a temporary file on the EC2 instance
-                    bat """
-                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "echo '${deployScript}' > deploy.sh; chmod +x deploy.sh; ./deploy.sh"
-                    """
+                        // Save the script to a temporary file on the EC2 instance
+                        bat """
+                        plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "echo '${deployScript}' > deploy.sh; chmod +x deploy.sh; ./deploy.sh"
+                        """
+                    }
                 }
             }
         }
