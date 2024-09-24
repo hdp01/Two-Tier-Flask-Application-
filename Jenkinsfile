@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credential' // This should point to your stored Docker credentials
+        DOCKER_CREDENTIALS_ID = 'docker-credential' // Make sure this matches your Jenkins stored credentials
         GIT_CREDENTIALS_ID = 'github-credentials'
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
         SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.ppk"
@@ -31,13 +31,24 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
+                    // Use a temporary login script to avoid interactive login issues
+                    def loginCommand = """
+                        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+                    """
+
+                    // Create a temporary shell script to handle Docker login and image management
+                    def deployScript = """
+                        #!/bin/bash
+                        ${loginCommand}
+                        docker pull ${DOCKER_IMAGE_NAME}:latest
+                        docker stop \$(docker ps -q) || true
+                        docker rm \$(docker ps -aq) || true
+                        docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest
+                    """
+
+                    // Save the script to a temporary file on the EC2 instance
                     bat """
-                    plink -i C:/Users/LENOVO/Downloads/target-server-key.ppk ubuntu@${EC2_HOST} -batch " \
-                    echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin; \
-                    docker pull ${DOCKER_IMAGE_NAME}:latest; \
-                    docker stop \$(docker ps -q); \
-                    docker rm \$(docker ps -aq); \
-                    docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest"
+                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "echo '${deployScript}' > deploy.sh; chmod +x deploy.sh; ./deploy.sh"
                     """
                 }
             }
