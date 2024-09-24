@@ -20,6 +20,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Use the stored Docker credentials for authentication
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
                         def app = docker.build(DOCKER_IMAGE_NAME)
                         app.push('latest')
@@ -32,12 +33,12 @@ pipeline {
             steps {
                 script {
                     bat """
-                    plink -i C:/Users/LENOVO/Downloads/target-server-key.ppk ubuntu@43.204.142.65 -batch " \
-                    echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin; \
-                    docker pull harshp01/two-tier-app:latest; \
+                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch " \
+                    echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin; \
+                    docker pull ${DOCKER_IMAGE_NAME}:latest; \
                     docker stop \$(docker ps -q); \
                     docker rm \$(docker ps -aq); \
-                    docker run -d -p 80:80 harshp01/two-tier-app:latest"
+                    docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest"
                     """
                 }
             }
