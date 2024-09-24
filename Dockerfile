@@ -20,5 +20,8 @@ COPY . /app/
 # Expose the port the Flask app runs on
 EXPOSE 5000
 
+# Health check to ensure the app is running
+HEALTHCHECK CMD curl --fail http://localhost:5000/ || exit 1
+
 # Command to run the Flask app
 CMD ["python", "app.py"]
