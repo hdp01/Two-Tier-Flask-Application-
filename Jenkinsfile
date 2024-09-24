@@ -31,15 +31,13 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
-                    // Use plink (part of PuTTY) to SSH into EC2 from Windows
                     bat """
-                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch " ^
-                        echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin; ^
-                        docker pull ${DOCKER_IMAGE_NAME}:latest; ^
-                        for /F %i in ('docker ps -q --filter "ancestor=${DOCKER_IMAGE_NAME}:latest"') do docker stop %i; ^
-                        for /F %i in ('docker ps -a -q --filter "ancestor=${DOCKER_IMAGE_NAME}:latest"') do docker rm %i; ^
-                        docker run -d -p 80:5000 ${DOCKER_IMAGE_NAME}:latest
-                    "
+                    plink -i C:/Users/LENOVO/Downloads/target-server-key.ppk ubuntu@43.204.142.65 -batch " \
+                    echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin; \
+                    docker pull harshp01/two-tier-app:latest; \
+                    docker stop \$(docker ps -q); \
+                    docker rm \$(docker ps -aq); \
+                    docker run -d -p 80:80 harshp01/two-tier-app:latest"
                     """
                 }
             }
