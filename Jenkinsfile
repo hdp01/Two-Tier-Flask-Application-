@@ -5,7 +5,7 @@ pipeline {
         DOCKER_CREDENTIALS_ID = 'docker-credential'
         GIT_CREDENTIALS_ID = 'github-credentials'
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
-        SSH_KEY_PATH = "C:\Users\LENOVO\Downloads\target-server-key.pem" // Adjust this path to the location of your `.pem` file
+        SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.pem" // Adjust this path to the location of your `.pem` file
         EC2_USER = 'ubuntu'
         EC2_HOST = '43.204.142.65' // Replace with your EC2 public IP address
     }
