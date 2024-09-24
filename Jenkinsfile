@@ -2,25 +2,18 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credential' // Docker Hub credentials ID
-        GIT_CREDENTIALS_ID = 'github-credentials'    // GitHub credentials ID
-        DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'  // Docker image name
-        EC2_PUBLIC_IP = '43.204.142.65'              // EC2 instance public IP
-        SSH_KEY_PATH = 'C:\\Users\\LENOVO\\Downloads\\target-server-key.pem' // Path to SSH key
+        DOCKER_CREDENTIALS_ID = 'docker-credential'
+        GIT_CREDENTIALS_ID = 'github-credentials'
+        DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
+        SSH_KEY_PATH = "C:\Users\LENOVO\Downloads\target-server-key.pem" // Adjust this path to the location of your `.pem` file
+        EC2_USER = 'ubuntu'
+        EC2_HOST = '43.204.142.65' // Replace with your EC2 public IP address
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm // Check out the code from the GitHub repository
-            }
-        }
-
-        stage('List Ansible Directory') {
-            steps {
-                script {
-                    bat 'dir ansible' // List the contents of the ansible directory
-                }
+                checkout scm
             }
         }
 
@@ -28,34 +21,25 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        def app = docker.build(DOCKER_IMAGE_NAME) // Build the Docker image
-                        app.push('latest') // Push the image to Docker Hub
+                        def app = docker.build(DOCKER_IMAGE_NAME)
+                        app.push('latest')
                     }
                 }
             }
         }
 
-        stage('Deploy with Ansible') {
+        stage('Deploy to EC2') {
             steps {
                 script {
-                    // List files for debugging
-                    bat 'dir C:\\Users\\LENOVO\\Downloads\\'
-
-                    // Copy ansible directory to EC2
-                    bat """
-                        scp -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" -r ansible ubuntu@${EC2_PUBLIC_IP}:~
-                    """
-                    // Copy the SSH key to EC2 (optional)
-                    bat """
-                        scp -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP}:~/.ssh/target-server-key.pem
-                    """
-                    // Set permissions for the SSH key on EC2
-                    bat """
-                        ssh -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP} "chmod 600 ~/.ssh/target-server-key.pem"
-                    """
-                    // Run ansible playbook
-                    bat """
-                        ssh -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}" ubuntu@${EC2_PUBLIC_IP} "ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_SSH_PRIVATE_KEY_FILE=${SSH_KEY_PATH} ansible-playbook -i ~/ansible/inventory ~/ansible/playbook.yml -vvv"
+                    // SSH into EC2 and run deployment commands
+                    sh """
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} '
+                        docker login -u harshp01 -p your-dockerhub-password;
+                        docker pull ${DOCKER_IMAGE_NAME}:latest;
+                        docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE_NAME}:latest);
+                        docker rm \$(docker ps -a -q --filter ancestor=${DOCKER_IMAGE_NAME}:latest);
+                        docker run -d -p 80:5000 ${DOCKER_IMAGE_NAME}:latest
+                    '
                     """
                 }
             }
@@ -64,10 +48,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment completed successfully!' // Success message
+            echo 'Deployment to EC2 successful!'
         }
         failure {
-            echo 'Deployment failed. Check the logs for more details.' // Failure message
+            echo 'Pipeline failed. Check the logs for more details.'
         }
     }
 }
