@@ -31,11 +31,9 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
-                    // Use the credentials stored in Jenkins directly
                     withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        // Create a temporary shell script to handle Docker login and image management
-                        def deployScript = """
-                            #!/bin/bash
+                        // Create a deploy command string
+                        def deployCommand = """
                             echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
                             docker pull ${DOCKER_IMAGE_NAME}:latest
                             docker stop \$(docker ps -q) || true
@@ -43,9 +41,9 @@ pipeline {
                             docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest
                         """
 
-                        // Save the script to a temporary file on the EC2 instance
+                        // Execute commands directly via plink
                         bat """
-                        plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "echo '${deployScript}' > deploy.sh; chmod +x deploy.sh; ./deploy.sh"
+                        plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "${deployCommand}"
                         """
                     }
                 }
