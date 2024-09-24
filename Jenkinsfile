@@ -32,18 +32,18 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        // Create a deploy command string
+                        // Create a deploy command string without Groovy interpolation for password
                         def deployCommand = """
                             echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
                             docker pull ${DOCKER_IMAGE_NAME}:latest
                             docker stop \$(docker ps -q) || true
                             docker rm \$(docker ps -aq) || true
                             docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest
-                        """
+                        """.replace('$', '\\$') // Escape $ for proper handling
 
                         // Execute commands directly via plink
                         bat """
-                        plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "${deployCommand}"
+                        plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "${deployCommand.replace('\n', ';')}"
                         """
                     }
                 }
