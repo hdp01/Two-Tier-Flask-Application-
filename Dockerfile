@@ -21,7 +21,7 @@ COPY . /app/
 EXPOSE 80
 
 # Health check to ensure the app is running
-HEALTHCHECK CMD curl --fail http://localhost:5000/ || exit 1
+HEALTHCHECK CMD curl --fail http://localhost:80/ || exit 1
 
 # Command to run the Flask app
 CMD ["python", "app.py"]
