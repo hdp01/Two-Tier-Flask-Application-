@@ -27,14 +27,20 @@ pipeline {
             }
         }
 
-        stage('Copy and Deploy to EC2') {
+        stage('Copy Deploy Script to EC2') {
             steps {
                 script {
                     // Copy the deploy.sh script to the EC2 instance
                     bat """
                     pscp -i ${SSH_KEY_PATH} ${DEPLOY_SCRIPT} ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/deploy.sh
                     """
+                }
+            }
+        }
 
+        stage('Make Script Executable and Deploy') {
+            steps {
+                script {
                     // Make the script executable and run it
                     bat """
                     plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "chmod +x /home/${EC2_USER}/deploy.sh && /home/${EC2_USER}/deploy.sh"
