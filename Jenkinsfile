@@ -6,6 +6,7 @@ pipeline {
         SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.ppk"
         EC2_USER = 'ubuntu'
         EC2_HOST = '43.204.142.65'
+        DEPLOY_SCRIPT = 'deploy.sh'  // Name of the deploy script
     }
 
     stages {
@@ -26,20 +27,17 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2') {
+        stage('Copy and Deploy to EC2') {
             steps {
                 script {
-                    // Create a deploy command string
-                    def deployCommand = """
-                        docker pull ${DOCKER_IMAGE_NAME}:latest && \
-                        docker stop \$(docker ps -q) || true && \
-                        docker rm \$(docker ps -aq) || true && \
-                        docker run -d -p 80:80 ${DOCKER_IMAGE_NAME}:latest
-                    """.replace('$', '\\$') // Escape $ for proper handling
-
-                    // Execute commands directly via plink
+                    // Copy the deploy.sh script to the EC2 instance
                     bat """
-                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "${deployCommand.trim()}"
+                    pscp -i ${SSH_KEY_PATH} ${DEPLOY_SCRIPT} ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/deploy.sh
+                    """
+
+                    // Make the script executable and run it
+                    bat """
+                    plink -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_HOST} -batch "chmod +x /home/${EC2_USER}/deploy.sh && /home/${EC2_USER}/deploy.sh"
                     """
                 }
             }
