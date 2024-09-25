@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Pull the latest Docker image
-docker pull harshp01/two-tier-app:latest
-
-# Stop and remove existing containers
-docker stop $(docker ps -q) || true
-docker rm $(docker ps -aq) || true
+# Stop and remove any existing containers
+CONTAINER_NAME="your_container_name" # Update with your actual container name
+if [ $(docker ps -q -f name=$CONTAINER_NAME) ]; then
+    docker stop $CONTAINER_NAME
+    docker rm $CONTAINER_NAME
+fi
 
 # Run the new container
-docker run -d -p 80:80 harshp01/two-tier-app:latest
+docker run -d --name $CONTAINER_NAME -p 80:80 harshp01/two-tier-app:latest
