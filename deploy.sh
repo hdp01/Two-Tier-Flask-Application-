@@ -1,6 +1,11 @@
 #!/bin/bash
 
 CONTAINER_NAME="two-tier-app"
+IMAGE_NAME="harshp01/two-tier-app:latest"
+
+# Pull the latest image from Docker Hub
+echo "Pulling the latest image: $IMAGE_NAME"
+docker pull $IMAGE_NAME
 
 # Stop and remove any existing containers
 if [ $(docker ps -q -f name=$CONTAINER_NAME) ]; then
@@ -13,7 +18,7 @@ fi
 
 # Run the new container
 echo "Starting new container: $CONTAINER_NAME"
-CONTAINER_ID=$(docker run -d --name $CONTAINER_NAME -p 80:80 harshp01/two-tier-app:latest)
+CONTAINER_ID=$(docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME)
 echo "Container started with ID: $CONTAINER_ID"
 
 # Display logs for the new container
