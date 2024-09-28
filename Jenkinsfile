@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE_NAME = 'harshp01/two-tier-app'
         SSH_KEY_PATH = "C:/Users/LENOVO/Downloads/target-server-key.ppk"
         EC2_USER = 'ubuntu'
-        EC2_HOST = '13.201.18.64'
+        EC2_HOST = '13.232.34.22'
         DEPLOY_SCRIPT = 'deploy.sh'  // Name of the deploy script
     }
 
