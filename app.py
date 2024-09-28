@@ -8,7 +8,7 @@ def home():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Task for GDG RBU</title>
+        <title>Task1 for GDG RBU</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
