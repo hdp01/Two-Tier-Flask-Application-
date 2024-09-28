@@ -18,10 +18,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Expose the port the Flask app runs on
-EXPOSE 80
+EXPOSE 443
 
 # Health check to ensure the app is running
-HEALTHCHECK CMD curl --fail http://localhost:80/ || exit 1
+HEALTHCHECK CMD curl --fail http://localhost:443/ || exit 1
 
 # Command to run the Flask app
 CMD ["python", "app.py"]
